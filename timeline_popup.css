@@ -73,6 +73,8 @@
     border: 1px solid var(--border-color);
     position: relative;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    /* Added cursor pointer to indicate clickability */
 }
 
 .timeline-content:hover {
@@ -140,15 +142,23 @@
     top: 15px;
     right: 20px;
     font-size: 3rem;
-    color: #fff;
+    color: var(--text-color);
+    /* Changed from fixed white to variable to see on bg if no image */
     cursor: pointer;
     text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    /* Keep shadow for visibility over images */
     z-index: 10;
     transition: transform 0.2s;
 }
 
+/* If no image, ensure close button is visible */
+/* We can add a class dynamically or just make it standard text color if no header */
+/* For now, text-shadow helps if it is over white bg too? no text-shadow usually makes it dark. */
+/* Let's force it to be visible. If header is hidden, it's on the white bg. */
+
 .popup-close:hover {
     transform: scale(1.1);
+    color: var(--main-color);
 }
 
 .popup-body {

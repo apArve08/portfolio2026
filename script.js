@@ -32,12 +32,29 @@ themeIcon.onclick = () => {
 // Cursor Hover Effect on links and buttons
 /* Remove custom cursor logic as per request */
 
-/* Project Popup Logic */
-function openPopup(title, desc, imgSrc) {
+/* Popup Logic for Projects, Experience, and Education */
+function openPopup(title, desc, imgSrc, subtitle = "") {
     const popup = document.getElementById('project-popup');
+    const imgElement = document.getElementById('popup-img');
+    const headerElement = document.querySelector('.popup-header');
+
     document.getElementById('popup-title').innerText = title;
-    document.getElementById('popup-desc').innerText = desc;
-    document.getElementById('popup-img').src = imgSrc;
+    // Add subtitle/date if exists
+    let descContent = "";
+    if (subtitle) {
+        descContent += `<strong>${subtitle}</strong><br><br>`;
+    }
+    descContent += desc;
+    document.getElementById('popup-desc').innerHTML = descContent;
+
+    if (imgSrc) {
+        imgElement.src = imgSrc;
+        imgElement.style.display = 'block';
+        headerElement.style.display = 'block';
+    } else {
+        imgElement.style.display = 'none';
+        headerElement.style.display = 'none';
+    }
 
     popup.style.display = 'flex';
     document.body.style.overflow = 'hidden'; // Disable scroll
@@ -119,7 +136,7 @@ const cursorSpan = document.querySelector('.typing-text');
 
 // Only run if elements exist (simple safety check)
 if (typedTextSpan) {
-    const textArray = ["Frontend Developer", "Minimalist Specialist", "Problem Solver"];
+    const textArray = ["s Developer", "Minimalist Specialist", "Problem Solver"];
     const typingDelay = 100;
     const erasingDelay = 100;
     const newTextDelay = 2000;
