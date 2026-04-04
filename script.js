@@ -33,10 +33,11 @@ themeIcon.onclick = () => {
 /* Remove custom cursor logic as per request */
 
 /* Popup Logic for Projects, Experience, and Education */
-function openPopup(title, desc, imgSrc, subtitle = "") {
+function openPopup(title, desc, imgSrc, subtitle = "", tech = "") {
     const popup = document.getElementById('project-popup');
     const imgElement = document.getElementById('popup-img');
     const headerElement = document.querySelector('.popup-header');
+    const techElement = document.getElementById('popup-tech');
 
     document.getElementById('popup-title').innerText = title;
     // Add subtitle/date if exists
@@ -46,6 +47,15 @@ function openPopup(title, desc, imgSrc, subtitle = "") {
     }
     descContent += desc;
     document.getElementById('popup-desc').innerHTML = descContent;
+
+    // Render technologies dynamically
+    if (tech) {
+        techElement.innerHTML = `<strong>Technologies:</strong> ${tech}`;
+        techElement.style.display = 'block';
+    } else {
+        techElement.innerHTML = '';
+        techElement.style.display = 'none';
+    }
 
     if (imgSrc) {
         imgElement.src = imgSrc;
