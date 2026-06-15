@@ -92,23 +92,24 @@
     height: 100%;
     background: rgba(0, 0, 0, 0.8);
     display: none;
-    /* Hidden by default */
     justify-content: center;
     align-items: center;
     z-index: 1000;
     padding: 2rem;
     backdrop-filter: blur(5px);
+    overflow: hidden; /* overlay never scrolls — content box scrolls */
 }
 
 .project-popup-content {
     background: var(--second-bg-color);
     width: 100%;
     max-width: 800px;
+    max-height: 90vh;            /* cap height to viewport */
     border-radius: 12px;
     position: relative;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: hidden;            /* children stay inside rounded corners */
     animation: popupScale 0.3s ease forwards;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
 }
@@ -164,6 +165,8 @@
 .popup-body {
     padding: 3rem;
     color: var(--text-color);
+    overflow-y: auto;            /* THIS is what scrolls — not the overlay */
+    overscroll-behavior: contain; /* stops scroll from leaking to page */
 }
 
 .popup-body h3 {
