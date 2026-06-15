@@ -211,7 +211,7 @@ OPENWEATHER_API_KEY=
       },
     ],
     description: `
-      A fully local Retrieval-Augmented Generation (RAG) evaluation pipeline built over a 4-week sprint
+      A fully local Retrieval-Augmented Generation (RAG) pipeline built over a 4-week sprint
       to understand how modern AI systems retrieve, process, and generate information —
       without relying on cloud APIs.<br><br>
       <strong>Components:</strong><br>
@@ -220,244 +220,136 @@ OPENWEATHER_API_KEY=
       • Benchmarking harness measuring latency, retrieval quality & answer relevance<br>
       • Next.js dashboard with Recharts for visualising results across LLMs and chunk strategies
     `,
-    md: `# Local RAG Evaluation Pipeline
+    md: `# P1 — Local AI Evaluator & RAG Pipeline
 
-> A fully local Retrieval-Augmented Generation evaluation system — no cloud APIs required.
-
----
-
-## Overview
-
-Rather than treating AI as a black box, this project explores the engineering trade-offs behind
-retrieval quality, latency, context management, and infrastructure design using only local tools.
-
-**Built over a 4-week sprint.**
-
----
-
-## Tech Stack
-
-| Layer            | Technology                              |
-|------------------|-----------------------------------------|
-| Language         | Python 3.11                             |
-| RAG Framework    | LangChain                               |
-| LLM Runtime      | Ollama                                  |
-| Embeddings       | nomic-embed-text (768 dimensions)       |
-| Vector DB        | PostgreSQL + pgvector                   |
-| Infrastructure   | Docker, Docker Compose                  |
-| Dashboard        | Next.js 14, Recharts, Tailwind CSS      |
-
----
+A fully local Retrieval Augmented Generation (RAG) system — document ingestion,
+vector embeddings, semantic search, and a benchmarking dashboard comparing two
+local LLMs. No cloud APIs, no external dependencies beyond Ollama and Docker.
 
 ## Architecture
 
 \`\`\`
-Documents (PDF/TXT)
-      │
-      ▼
-┌─────────────────┐
-│  Chunking Layer │  ← RecursiveCharacterTextSplitter
-│  (chunk_size,   │
-│   chunk_overlap)│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Embedding      │  ← Ollama nomic-embed-text
-│  Pipeline       │     768-dim vectors
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  pgvector DB    │  ← Docker: PostgreSQL + pgvector
-│  (Docker)       │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Retrieval &    │  ← Semantic similarity search
-│  Benchmark      │     + LLM answer generation
-│  Engine         │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  Next.js        │  ← Latency, quality, relevance
-│  Dashboard      │     charts via Recharts
-└─────────────────┘
+data/                  → source documents (PDF, txt)
+scripts/
+  ingest.py            → document loading + chunking experiments
+  embed.py             → embedding + pgvector insertion
+  benchmark.py         → 20-question benchmark across 2 models
+  query_api.py         → live query endpoint for dashboard
+results/
+  chunk_log.json       → WK01 chunking experiment results
+  benchmark.json       → WK03 benchmark results
+dashboard/             → Next.js analytics dashboard
 \`\`\`
 
----
+## Stack
+- **Python** — ingestion, embedding, benchmarking
+- **LangChain** — document loading + recursive chunking
+- **Ollama** — local LLM serving (\`llama3.2:latest\`, \`phi3:3.8b\`,
+  \`nomic-embed-text\`)
+- **PostgreSQL + pgvector** (Docker) — vector storage and cosine similarity search
+- **Next.js + Recharts** — analytics dashboard
 
-## 1. Document Ingestion & Chunking
+## Setup
 
-\`\`\`python
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-
-def chunk_document(text: str, chunk_size: int = 512, overlap: int = 64):
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=chunk_size,
-        chunk_overlap=overlap,
-        separators=["\\n\\n", "\\n", ". ", " ", ""]
-    )
-    return splitter.split_text(text)
+### 1. Install Ollama and pull models
+\`\`\`bash
+ollama pull llama3.2
+ollama pull phi3:3.8b
+ollama pull nomic-embed-text
 \`\`\`
 
-**Key insight:** Small chunks improve retrieval precision but lose context.
-Larger chunks preserve context at the cost of retrieval specificity.
-
----
-
-## 2. Embedding Pipeline
-
-\`\`\`python
-import ollama
-
-def embed_chunks(chunks: list[str]) -> list[list[float]]:
-    embeddings = []
-    for chunk in chunks:
-        response = ollama.embeddings(
-            model='nomic-embed-text',
-            prompt=chunk
-        )
-        embeddings.append(response['embedding'])  # 768-dim vector
-    return embeddings
+### 2. Start pgvector
+\`\`\`bash
+docker run -d \\
+  --name pgvector-db \\
+  -e POSTGRES_PASSWORD=password \\
+  -e POSTGRES_DB=ragdb \\
+  -p 5432:5432 \\
+  ankane/pgvector
 \`\`\`
 
----
-
-## 3. Vector Storage (pgvector)
-
+### 3. Create schema
 \`\`\`sql
--- Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
--- Documents table
 CREATE TABLE documents (
-    id          SERIAL PRIMARY KEY,
-    content     TEXT NOT NULL,
-    embedding   vector(768),
-    metadata    JSONB,
-    created_at  TIMESTAMPTZ DEFAULT now()
+    id SERIAL PRIMARY KEY,
+    content TEXT NOT NULL,
+    metadata JSONB,
+    embedding VECTOR(768),
+    chunk_size INT,
+    source_file TEXT
 );
 
--- Similarity search index
 CREATE INDEX ON documents
 USING ivfflat (embedding vector_cosine_ops)
 WITH (lists = 100);
 \`\`\`
 
-\`\`\`python
-def similarity_search(query_embedding: list[float], top_k: int = 5):
-    return db.execute("""
-        SELECT content, metadata,
-               1 - (embedding <=> %s::vector) AS similarity
-        FROM documents
-        ORDER BY embedding <=> %s::vector
-        LIMIT %s
-    """, [query_embedding, query_embedding, top_k])
-\`\`\`
-
----
-
-## 4. Benchmarking Engine
-
-\`\`\`python
-def run_benchmark(questions: list[str], models: list[str]) -> dict:
-    results = {}
-    for model in models:
-        model_results = []
-        for q in questions:
-            start = time.perf_counter()
-            context = retrieve(q)
-            answer  = generate(model, q, context)
-            latency = time.perf_counter() - start
-
-            model_results.append({
-                "question": q,
-                "answer":   answer,
-                "latency":  round(latency, 3),
-                "context_chunks": len(context)
-            })
-        results[model] = model_results
-    return results
-\`\`\`
-
----
-
-## 5. Docker Compose Setup
-
-\`\`\`yaml
-# docker-compose.yml
-services:
-  postgres:
-    image: pgvector/pgvector:pg16
-    environment:
-      POSTGRES_DB: ragdb
-      POSTGRES_USER: raguser
-      POSTGRES_PASSWORD: ragpass
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-
-  ollama:
-    image: ollama/ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_models:/root/.ollama
-
-volumes:
-  pgdata:
-  ollama_models:
-\`\`\`
-
----
-
-## Running Locally
-
+### 4. Install Python deps
 \`\`\`bash
-# Start infrastructure
-docker-compose up -d
-
-# Pull embedding model
-ollama pull nomic-embed-text
-
-# Pull LLM for generation
-ollama pull llama3.2:3b
-
-# Install Python deps
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
-
-# Ingest sample documents
-python ingest.py --dir ./docs --chunk-size 512 --overlap 64
-
-# Run benchmark
-python benchmark.py --models llama3.2:3b --questions ./questions.json
-
-# Start dashboard
-cd dashboard && npm install && npm run dev
 \`\`\`
 
----
+### 5. Run the pipeline
+\`\`\`bash
+python scripts/ingest.py     # chunking experiments
+python scripts/embed.py      # embed + store vectors
+python scripts/benchmark.py  # run 20-question benchmark
+\`\`\`
 
-## Key Takeaways
+### 6. Run the dashboard
+\`\`\`bash
+cd dashboard
+npm install
+npm run dev
+\`\`\`
+Visit \`http://localhost:3000\`
 
-> **Retrieval quality is not just about the LLM.**
-> It is heavily influenced by chunk size, overlap, embedding model choice, and vector search configuration.
+## Key Finding
 
-- **Small chunks** → higher retrieval precision, less context per chunk
-- **Large chunks** → more context, lower precision in dense documents
-- **nomic-embed-text** → strong performance at 768 dims for general documents
-- **pgvector with IVFFlat** → efficient for thousands of documents locally
+> Retrieval pipeline quality matters more than model size. With identical
+> retrieved context, \`phi3:3.8b\` (3.8B params) consistently outperformed
+> \`llama3.2:latest\` on answer accuracy — the larger model frequently
+> defaulted to "Not found in documents" even when the answer was present
+> in the retrieved chunks.
 
----
+## Chunking Experiment Results
 
-*A project to understand RAG internals without relying on cloud APIs.*
+| chunk_size | overlap | chunks (70-pg PDF) | chunks (6KB txt) |
+|---|---|---|---|
+| 256 | 32 | 802 | 40 |
+| 512 | 64 | 400 | 17 |
+| 1024 | 128 | 218 | 8 |
+
+512/64 was used as the production config.
+
+## Benchmark Results (summary)
+
+| Metric | llama3.2:latest | phi3:3.8b |
+|---|---|---|
+| Avg TTFT | ~3s (excl. outlier) | ~2.7s |
+| Avg accuracy (1–5) | ~1.3 | ~4.0 |
+| Behaviour | Conservative — often "not found" | Synthesised context into full answers |
+
+## Known Issues
+- Q2 had a 178s retrieval stall (embedding call hung) — treated as outlier
+- PDF (400 chunks) dominates retrieval over the smaller .txt file (17 chunks),
+  causing imbalanced source representation
+
+## Next Steps
+- Add reranking to balance retrieval across document sources
+- Test prompt engineering to fix llama3.2's "not found" bias
+- Add agentic tool-use layer (LangChain ReAct) on top of this RAG base
+
+## License
+MIT
 `
   }
 };
+
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
