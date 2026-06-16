@@ -32,57 +32,7 @@ themeIcon.onclick = () => {
 // Cursor Hover Effect on links and buttons
 /* Remove custom cursor logic as per request */
 
-/* Popup Logic for Projects, Experience, and Education */
-function openPopup(title, desc, imgSrc, subtitle = "", tech = "") {
-    const popup = document.getElementById('project-popup');
-    const imgElement = document.getElementById('popup-img');
-    const headerElement = document.querySelector('.popup-header');
-    const techElement = document.getElementById('popup-tech');
 
-    document.getElementById('popup-title').innerText = title;
-    // Add subtitle/date if exists
-    let descContent = "";
-    if (subtitle) {
-        descContent += `<strong>${subtitle}</strong><br><br>`;
-    }
-    descContent += desc;
-    document.getElementById('popup-desc').innerHTML = descContent;
-
-    // Render technologies dynamically
-    if (tech) {
-        techElement.innerHTML = `<strong>Technologies:</strong> ${tech}`;
-        techElement.style.display = 'block';
-    } else {
-        techElement.innerHTML = '';
-        techElement.style.display = 'none';
-    }
-
-    if (imgSrc) {
-        imgElement.src = imgSrc;
-        imgElement.style.display = 'block';
-        headerElement.style.display = 'block';
-    } else {
-        imgElement.style.display = 'none';
-        headerElement.style.display = 'none';
-    }
-
-    popup.style.display = 'flex';
-    document.body.style.overflow = 'hidden'; // Disable scroll
-}
-
-function closePopup() {
-    const popup = document.getElementById('project-popup');
-    popup.style.display = 'none';
-    document.body.style.overflow = 'auto'; // Enable scroll
-}
-
-// Close popup if clicking outside content
-window.onclick = function (event) {
-    const popup = document.getElementById('project-popup');
-    if (event.target == popup) {
-        closePopup();
-    }
-}
 
 /* Scroll Sections Active Link */
 let sections = document.querySelectorAll('section');

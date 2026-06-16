@@ -351,6 +351,75 @@ MIT
 };
 
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   TIMELINE DATA
+   Each experience/education item has: title, company, period, tech[], and points[].
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+const TIMELINE_DATA = {
+  'it-executive': {
+    title: 'IT Executive – Software',
+    company: 'Toyo Tires',
+    period: 'March 2026 – Present',
+    tech: ['VB.NET', 'C#', 'Power Automate', 'AI Builder', 'MES'],
+    points: [
+      'Performed daily system monitoring and troubleshooting for MES and internal systems.',
+      'Developed and maintained MES features using VB.NET and C#.',
+      'Built and automated internal workflows using C#, Power Automate, and AI Builder, improving process efficiency.'
+    ]
+  },
+  'it-technician': {
+    title: 'IT Technician',
+    company: 'YBS International Berhad',
+    period: 'July 2025 – March 2026',
+    tech: ['PHP', 'MySQL', 'REST APIs', 'Docker', 'Git', 'Windows Server', 'Active Directory', 'Microsoft 365'],
+    points: [
+      'Developed and maintained internal web applications including E-Appraisal, IT Request System Management, and IT Asset Management systems using PHP, MySQL, REST APIs, Docker, and Git.',
+      'Designed database schemas and implemented CRUD workflows to support internal operations.',
+      'Managed MES system for production line (PCB) and assisted in setting up the system and infrastructure.',
+      'Provided comprehensive IT support across 3 manufacturing plants, ensuring minimal downtime and efficient issue resolution.',
+      'Administered Windows Server, Active Directory, and Microsoft 365, including backups, patching, and access control.',
+      'Provided IT and application support across 3 manufacturing plants, minimizing downtime and improving response efficiency.'
+    ]
+  },
+  'app-developer-intern': {
+    title: 'Application Developer Intern',
+    company: 'Spritzer Berhad',
+    period: 'Aug 2024 – Jan 2025',
+    tech: ['React', 'TypeScript', 'ASP.NET', 'C#', 'ManageEngine API', 'Power Automate', 'Power BI', 'ML.NET', 'scikit-learn'],
+    points: [
+      'Streamlined internal web portal workflow processes by developing automated tools for PowerPoint generation and Excel export using React, TypeScript, and ASP.NET, reducing manual workload for teams.',
+      'Enhanced operational accuracy by integrating ManageEngine API and C# to detect and resolve ticket assignment errors, ensuring timely technician responses through automated email notifications.',
+      'Improved system efficiency by leveraging machine learning and C# to accurately predict and auto-complete missing or incorrect ticket fields, minimizing data inconsistencies.',
+      'Simplified ERP email workflows by automating supplier acknowledgment processes using AI and C#, enabling faster and more reliable transaction management.',
+      'Extracted data from ManageEngine API to Power BI and Excel for monthly reporting and visualization.',
+      'Automated tracking of unresponded tickets by extracting data from ManageEngine API and sending reminders to group chats in MS Teams via Power Automate, improving response times and accountability.'
+    ]
+  },
+  'bachelor-software-engineering': {
+    title: 'Bachelor of Computer Science (Software Engineering) with Honours',
+    company: 'University of Malaysia Terengganu',
+    period: '2021 – 2025',
+    tech: ['Software Engineering', 'Machine Learning', 'System Design', 'Web Development'],
+    points: [
+      'CGPA: 3.40',
+      'Graduated with Honours in Software Engineering with a focus on application development, system design, and machine learning.'
+    ]
+  },
+  'foundation-stem': {
+    title: 'Foundation in STeM',
+    company: 'University of Malaysia Terengganu',
+    period: '2020 – 2021',
+    tech: ['Science', 'Technology', 'Engineering', 'Mathematics'],
+    points: [
+      'CGPA: 3.96',
+      'Completed foundation studies in Science, Technology, Engineering, and Mathematics, building a strong academic base for the software engineering degree.'
+    ]
+  }
+};
+
+
+
 
 /* ═══════════════════════════════════════════════════════════════════════════
    STATE
@@ -361,7 +430,7 @@ let currentImageIndex = 0;
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   OPEN / CLOSE PROJECT MODAL
+   OPEN / CLOSE PROJECT MODAL & TABS
    ═══════════════════════════════════════════════════════════════════════════ */
 
 function openProjectPopup(key) {
@@ -384,6 +453,17 @@ function openProjectPopup(key) {
   // GitHub link
   document.getElementById('proj-github').href = project.github;
 
+  // Pre-render markdown if available
+  if (project.md) {
+    document.getElementById('md-content').innerHTML = renderMarkdown(project.md);
+    document.getElementById('tab-btn-readme').style.display = 'inline-flex';
+  } else {
+    document.getElementById('tab-btn-readme').style.display = 'none';
+  }
+
+  // Reset tabs to Overview
+  switchProjTab('overview');
+
   // Gallery
   renderGallery(project.images, 0);
 
@@ -396,6 +476,68 @@ function closeProjectPopup() {
   document.getElementById('proj-overlay').classList.remove('open');
   document.body.style.overflow = 'auto';
   currentProject = null;
+}
+
+function switchProjTab(tabName) {
+  const overviewBtn = document.getElementById('tab-btn-overview');
+  const readmeBtn = document.getElementById('tab-btn-readme');
+  const overviewContent = document.getElementById('tab-overview');
+  const readmeContent = document.getElementById('tab-readme');
+
+  if (tabName === 'overview') {
+    overviewBtn.classList.add('active');
+    readmeBtn.classList.remove('active');
+    overviewContent.classList.add('active');
+    readmeContent.classList.remove('active');
+    document.querySelector('.proj-body').scrollTop = 0;
+  } else if (tabName === 'readme') {
+    overviewBtn.classList.remove('active');
+    readmeBtn.classList.add('active');
+    overviewContent.classList.remove('active');
+    readmeContent.classList.add('active');
+    // Scroll README to top
+    const mdContent = document.getElementById('md-content');
+    if (mdContent) mdContent.scrollTop = 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   OPEN / CLOSE TIMELINE MODAL
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+function openTimelinePopup(key) {
+  const item = TIMELINE_DATA[key];
+  if (!item) return;
+
+  document.getElementById('timeline-title').textContent = item.title;
+  document.getElementById('timeline-org').innerHTML = `<i class="fas fa-building"></i> ` + item.company;
+  document.getElementById('timeline-date').innerHTML = `<i class="far fa-calendar-alt"></i> ` + item.period;
+
+  // Render points
+  const pointsEl = document.getElementById('timeline-points');
+  pointsEl.innerHTML = item.points.map(p => `<li>${p}</li>`).join('');
+
+  // Render tech tags
+  const tagsEl = document.getElementById('timeline-tags');
+  if (item.tech && item.tech.length > 0) {
+    tagsEl.innerHTML = item.tech.map(t => `<span>${t}</span>`).join('');
+    tagsEl.style.display = 'flex';
+  } else {
+    tagsEl.innerHTML = '';
+    tagsEl.style.display = 'none';
+  }
+
+  // Reset scroll
+  document.querySelector('.timeline-modal').scrollTop = 0;
+
+  // Show overlay
+  document.getElementById('timeline-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTimelinePopup() {
+  document.getElementById('timeline-overlay').classList.remove('open');
+  document.body.style.overflow = 'auto';
 }
 
 
@@ -485,30 +627,6 @@ function closeLightboxOnBg(e) {
   }
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   MARKDOWN VIEWER
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-function openMdViewer() {
-  if (!currentProject || !currentProject.md) return;
-
-  // Render markdown → HTML
-  const rendered = renderMarkdown(currentProject.md);
-  document.getElementById('md-content').innerHTML = rendered;
-  document.getElementById('md-viewer-title').textContent = currentProject.title + ' — README';
-
-  document.getElementById('md-overlay').classList.add('open');
-}
-
-function closeMdViewer() {
-  document.getElementById('md-overlay').classList.remove('open');
-}
-
-function backToProject() {
-  closeMdViewer();
-  // project modal stays open underneath
-}
 
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -664,8 +782,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('proj-overlay').addEventListener('click', (e) => {
     if (e.target === document.getElementById('proj-overlay')) closeProjectPopup();
   });
-  document.getElementById('md-overlay').addEventListener('click', (e) => {
-    if (e.target === document.getElementById('md-overlay')) closeMdViewer();
+  document.getElementById('timeline-overlay').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('timeline-overlay')) closeTimelinePopup();
   });
 });
 
@@ -674,8 +792,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     if (document.getElementById('lightbox-overlay').classList.contains('open')) {
       closeLightbox();
-    } else if (document.getElementById('md-overlay').classList.contains('open')) {
-      closeMdViewer();
+    } else if (document.getElementById('timeline-overlay').classList.contains('open')) {
+      closeTimelinePopup();
     } else if (document.getElementById('proj-overlay').classList.contains('open')) {
       closeProjectPopup();
     }

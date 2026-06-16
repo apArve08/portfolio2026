@@ -332,15 +332,90 @@
 
 
 /* ═══════════════════════════════════════════════════
-   MARKDOWN VIEWER MODAL
+   MODAL TABS (Overview & README Documentation)
    ═══════════════════════════════════════════════════ */
 
-.md-overlay {
+.proj-tabs {
+    display: flex;
+    gap: 2rem;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 2.2rem;
+    padding-bottom: 0.2rem;
+}
+
+.proj-tab-btn {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    opacity: 0.65;
+    font-size: 1.4rem;
+    font-weight: 600;
+    padding: 1rem 0;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-family: inherit;
+}
+
+.proj-tab-btn:hover {
+    opacity: 1;
+    color: var(--main-color);
+}
+
+.proj-tab-btn.active {
+    opacity: 1;
+    color: var(--main-color);
+}
+
+.proj-tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--main-color);
+    border-radius: 2px;
+}
+
+.proj-tab-content {
+    display: none;
+    animation: tabFadeIn 0.25s ease forwards;
+}
+
+.proj-tab-content.active {
+    display: block;
+}
+
+@keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+#tab-readme {
+    max-height: 50vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 0.5rem;
+}
+
+.md-content {
+    padding: 0.5rem 0 2rem;
+}
+
+/* ═══════════════════════════════════════════════════
+   UNIFIED TIMELINE MODAL (Experience / Education)
+   ═══════════════════════════════════════════════════ */
+
+.timeline-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.92);
-    backdrop-filter: blur(10px);
-    z-index: 3000;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(12px);
+    z-index: 2000;
     display: none;
     justify-content: center;
     align-items: center;
@@ -348,82 +423,142 @@
     overflow: hidden;
 }
 
-.md-overlay.open {
+.timeline-overlay.open {
     display: flex;
 }
 
-.md-modal {
+.timeline-modal {
     background: var(--second-bg-color);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     width: 100%;
-    max-width: 860px;
-    max-height: 90vh;
+    max-width: 680px;
+    max-height: 85vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: projSlideUp 0.3s ease forwards;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    animation: projSlideUp 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45);
 }
 
-.md-header {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    padding: 1.6rem 2.4rem;
-    border-bottom: 1px solid var(--border-color);
-    flex-shrink: 0;
-}
-
-.md-back-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 1.4rem;
-    font-weight: 500;
+.timeline-close {
+    position: absolute;
+    top: 1.4rem;
+    right: 1.8rem;
+    font-size: 2.4rem;
     color: var(--text-color);
     background: var(--bg-color);
     border: 1px solid var(--border-color);
-    padding: 0.6rem 1.4rem;
-    border-radius: 8px;
+    border-radius: 50%;
+    width: 3.6rem;
+    height: 3.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: all 0.2s;
-}
-
-.md-back-btn:hover {
-    border-color: var(--main-color);
-    color: var(--main-color);
-}
-
-.md-header-title {
-    font-size: 1.6rem;
-    font-weight: 600;
-    color: var(--text-color);
-    opacity: 0.7;
-}
-
-.md-close {
-    margin-left: auto;
-    font-size: 2.2rem;
-    color: var(--text-color);
-    background: none;
-    border: none;
-    cursor: pointer;
+    z-index: 10;
     line-height: 1;
-    opacity: 0.6;
     transition: all 0.2s;
 }
 
-.md-close:hover {
-    opacity: 1;
-    color: var(--main-color);
+.timeline-close:hover {
+    background: var(--main-color);
+    border-color: var(--main-color);
+    color: #fff;
+    transform: rotate(90deg);
 }
 
-.md-content {
-    padding: 3rem;
+.timeline-modal-body {
+    padding: 3.2rem;
     overflow-y: auto;
     overscroll-behavior: contain;
-    flex: 1;
+}
+
+.timeline-modal-body h2 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 0.8rem;
+    line-height: 1.35;
+    padding-right: 4.5rem; /* prevent title from overlapping close button */
+}
+
+.timeline-meta {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+    font-size: 1.35rem;
+    color: var(--text-color);
+    opacity: 0.75;
+    flex-wrap: wrap;
+    font-weight: 500;
+}
+
+.timeline-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.timeline-meta i {
+    color: var(--main-color);
+    font-size: 1.4rem;
+}
+
+.timeline-points {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 2.8rem 0;
+}
+
+.timeline-points li {
+    font-size: 1.5rem;
+    line-height: 1.8;
+    margin-bottom: 1.4rem;
+    position: relative;
+    padding-left: 2.4rem;
+    color: var(--text-color);
+    opacity: 0.9;
+}
+
+.timeline-points li:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-points li::before {
+    content: '✦';
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: var(--main-color);
+    font-size: 1.35rem;
+}
+
+.timeline-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    padding-top: 2.2rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.timeline-tags span {
+    padding: 0.4rem 1.2rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--main-color);
+    transition: all 0.2s ease;
+}
+
+.timeline-tags span:hover {
+    background: var(--main-color);
+    border-color: var(--main-color);
+    color: #fff;
+    transform: translateY(-1px);
 }
 
 /* Rendered Markdown Styles */
@@ -559,7 +694,7 @@
 /* ── Responsive ── */
 @media (max-width: 768px) {
     .proj-modal,
-    .md-modal {
+    .timeline-modal {
         max-height: 95vh;
         border-radius: 12px;
     }
@@ -569,15 +704,21 @@
     }
 
     .proj-body,
+    .timeline-modal-body,
     .md-content {
-        padding: 2rem;
+        padding: 2.2rem 2rem;
     }
 
-    .proj-body h2 {
+    .proj-body h2,
+    .timeline-modal-body h2 {
         font-size: 2rem;
     }
 
     .md-content h1 {
         font-size: 2.2rem;
+    }
+
+    #tab-readme {
+        max-height: 60vh;
     }
 }
